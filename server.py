@@ -16,4 +16,8 @@ app.add_routes([web.get('/1', hello1)])
 app.add_routes([web.get('/2', hello2)])
 app.add_routes([web.post('/3', hello3)])
 
+<<<<<<< HEAD
 web.run_app(app)
+=======
+web.run_app(app)
+>>>>>>> a712aa847e8ba43cad0632e741b3b496edba5e7a
