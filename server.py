@@ -1,26 +1,16 @@
 ﻿import asyncio
 import pymysql
+import aiohttp_cors
 from aiohttp import web
 
 #Работа с SQL
-con = pymysql.connect('localhost', 'root', 'root', 'test', cursorclass=pymysql.cursors.DictCursor)
-
-with con:
-    cur = con.cursor()
-#    cur.execute("INSERT INTO `usersinfo` (`idusers`, 'name') VALUES ({0}, {1});".format('1234', 'John'))         #Добавить запись в таблицу
-#    cur.execute("SELECT * FROM usersinfo")                                                                       #Выбрать все записи из таблицы. * - получить все столбцы, иначе в '' пишем название столбца. Получить определённые записи - WHERE *условие*
-#    rows = cur.fetchall()                                                                                    #
-#    for row in rows:                                                                                         #
-#        print(row['idusers'], '   ', row['name'])                                                            #
-#    cur.execute("UPDATE `users` SET `name` = 'Now I'm Victor' WHERE `id` = 1234;")                           #Изменяем значение в таблице users в столбце name с id = 1234
-#    cur.execute("DELETE FROM `users` WHERE `idusers`= 123")                                                  #Удаляем ряд в таблице users с id = 123
-
+con = pymysql.connect('localhost', 'coolname', 'cool', 'one', cursorclass=pymysql.cursors.DictCursor)
 
 #Работа с HTTP-requests
 async def getProfile(request):
     with con:
         cur = con.cursor()
-        data = requestquery
+        data = request.query
         cur.execute("SELECT * FROM usersinfo WHERE `id` = {}".format(data['id']))
         rows = cur.fetchall()
         if rows.__len__() != 0:
@@ -83,14 +73,31 @@ async def removeEvent(request):
 
 
 app = web.Application()
-app.add_routes([web.get('/autorize', getProfile)])
-app.add_routes([web.get('/getProfile', getProfile)])
-app.add_routes([web.post('/registrate', registrate)])
-app.add_routes([web.post('/changeProfile', changeProfile)])
-app.add_routes([web.post('/createEvent', createEvent)])
-app.add_routes([web.post('/changeEvent', changeEvent)])
-app.add_routes([web.get('/getEvents', getEvents)])
-app.add_routes([web.post('/removeEvent', removeEvent)])
+
+cors = aiohttp_cors.setup(app, defaults={
+    "*": aiohttp_cors.ResourceOptions(
+            allow_credentials=True,
+            expose_headers="*",
+            allow_headers="*",
+        )
+})
+
+resource = cors.add(app.router.add_resource("/autorize"))
+cors.add(resource.add_route("GET", getProfile))
+resource = cors.add(app.router.add_resource("/getProfile"))
+cors.add(resource.add_route("GET", getProfile))
+resource = cors.add(app.router.add_resource("/registrate"))
+cors.add(resource.add_route("POST", registrate))
+resource = cors.add(app.router.add_resource("/changeProfile"))
+cors.add(resource.add_route("POST", changeProfile))
+resource = cors.add(app.router.add_resource("/createEvent"))
+cors.add(resource.add_route("POST", createEvent))
+resource = cors.add(app.router.add_resource("/changeEvent"))
+cors.add(resource.add_route("POST", changeEvent))
+resource = cors.add(app.router.add_resource("/getEvents"))
+cors.add(resource.add_route("GET", getEvents))
+resource = cors.add(app.router.add_resource("/removeEvent"))
+cors.add(resource.add_route("POST", removeEvent))
 
 
-web.run_app(app)
+web.run_app(app, host = '141.101.196.166', port=8080)
