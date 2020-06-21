@@ -1,7 +1,16 @@
 ﻿import asyncio
 import pymysql
 import aiohttp_cors
+import datetime
 from aiohttp import web
+
+def make_datetime(source):
+    s = source.split('.')
+    day = int(s[0])
+    month = int(s[1])
+    year = int(s[2])
+    return datetime.date(year,month,day)
+    
 
 #Работа с SQL
 con = pymysql.connect('localhost', 'coolname', 'cool', 'one', cursorclass=pymysql.cursors.DictCursor)
@@ -16,28 +25,28 @@ async def getProfile(request):
         if rows.__len__() != 0:
             return web.json_response({'success': True,
                                     'id': rows[0]['id'],
-                                    'firstname': rows[0]['firstname'], 
-                                    'lastname': rows[0]['lastname'], 
+                                    'first_name': rows[0]['first_name'], 
+                                    'last_name': rows[0]['last_name'], 
                                     'height': rows[0]['height'], 
                                     'weight': rows[0]['weight'], 
                                     'information': rows[0]['information'], 
-                                    'birth_date': rows[0]['birth_date'].strftime("%d-%m-%Y")})
+                                    'bdate': rows[0]['bdate'].strftime("%d.%m.%Y")})
         else:
             return web.json_response({'success': False})
 
 async def registrate(request):
     with con:
         cur = con.cursor()
-        data = await request.post()
+        data = await request.json()
         cur.execute(
-            "INSERT INTO `usersinfo` (`id`, `firstname`, `lastname`, `height`, `weight`, `information`, `birth_date`) VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}');".format(
-                data['id'], data['firstname'], data['lastname'], data['height'], data['weight'], data['information'], data['birth_date']))
+            "INSERT INTO `usersinfo` (`id`, `first_name`, `last_name`, `bdate`) VALUES ('{0}', '{1}', '{2}', '{3}');".format(
+                data['id'], data['first_name'], data['last_name'], make_datetime(data['bdate'])))
         return web.json_response({'success': True})
 
 async def changeProfile(request):
     with con:
         cur = con.cursor()
-        data = await request.post()
+        data = await request.json()
         for item in data:
             if item != 'id':
                 cur.execute("UPDATE `usersinfo` SET `{0}` = '{1}' WHERE `id` = {2};".format(item, data[item], data['id']))
@@ -46,7 +55,7 @@ async def changeProfile(request):
 async def createEvent(request):
     with con:
         cur = con.cursor()
-        data = await request.post()
+        data = await request.json()
         cur.execute(
             "INSERT INTO `events` (`users`, `creator`, `name`, `description`, `track_id`) VALUES ('{0}', '{1}', '{2}', '{3}', '{4}');".format(
                 data['users'], data['creator'], data['name'], data['description'], data['track_id']))
@@ -55,7 +64,7 @@ async def createEvent(request):
 async def changeEvent(request):
     with con:
         cur = con.cursor()
-        data = await request.post()
+        data = await request.json()
         for item in data:
             if item != 'id':
                 cur.execute("UPDATE `events` SET `{0}` = '{1}' WHERE `id` = {2};".format(item, data[item], data['id']))
